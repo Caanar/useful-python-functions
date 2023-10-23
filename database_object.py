@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb  2 14:21:45 2023
-
-@author: carrieta
-"""
-
 import pandas as pd
 import psycopg2
 from sshtunnel import SSHTunnelForwarder
