@@ -104,66 +104,8 @@ db.columns_per_table
 db.column_values_per_table
 
 # SQL queries:
-## 1. Show the income (sales), 
-## costs (the value consumed ingredients) 
-## and gross profits in USD 
-## of the last month of each country in which the chain is located. 
-## Keep in mind that the country with more utilities wants to be seen first.
-df_gross_profit = db.query("""WITH sales as
-             (
-             SELECT co.id, co."name" as "Country Name",
+df = db.query("""SELECT co.id, co."name" as "Country Name",
              sum(me.price*sa.units) as "Country Income (sales)"
-             FROM Country co 
-             left join City ci 
-                 on co.id = ci.country_id
-             left join Restaurant re 
-                 on ci.id = re.city_id
-             left join menu me
-                 on re.id = me.restaurant_id
-             left join sale sa
-                 on me.id = sa.menu_item_id
-             where sa.sale_timestamp >= date_trunc('month', current_date - interval '1' month)
-             and sa.sale_timestamp < date_trunc('month', current_date)
-             group by co.id
-             ),
-             costs as
-             (
-             SELECT co.id, co."name", as "Country Name",
-             sum(sl.cost_per_unit*pu.units) as "Costs (value consumed ingredients)"
-             FROM Country co 
-             left join City ci 
-                 on co.id = ci.country_id
-             left join supplier su
-                 on ci.id = su.city_id
-             left join shopping_list sl
-                 on su.id = sl.supplier_id
-             left join purchase pu
-                 on sl.id = pu.shopping_list_item_id
-             where pu.transaction_timestamp >= date_trunc('month', current_date - interval '1' month)
-             and pu.transaction_timestamp < date_trunc('month', current_date)
-             group by co.id
-             ),
-             currency_convert as
-             (
-             SELECT co.id, co."name", as "Country Name",
-             ce.conversion_factor as "Conversion Factor to USD"
              FROM Country co
-             left join currency cu
-                 on co.currency_id = cu.id
-             left join currency_exchange ce
-                 on cu.id = ce.base_currency_id
-             where ce.currency_to_convert_id = (select id from currency where "name" = 'US Dollar')
-             )
-             SELECT s."Country Name", 
-             s."Country Income (sales)"*cc."Conversion Factor to USD" as "Country Income (sales in USD)",
-             c."Costs (value consumed ingredients)"*cc."Conversion Factor to USD" 
-             as "Costs (value consumed ingredients in USD)", 
-             ((s."Country Income (sales)"*cc."Conversion Factor to USD")-
-              (c."Costs (value consumed ingredients)"*cc."Conversion Factor to USD")) as "Gross Profit (USD)"
-             FROM sales s 
-             left join costs c 
-                 on s.id = c.id
-             left join currency_convert cc
-                 on s.id = cc.id
-             order by ((s."Country Income (sales)"*cc."Conversion Factor to USD")-
-              (c."Costs (value consumed ingredients)"*cc."Conversion Factor to USD")) desc""")
+             where sa.sale_timestamp >= date_trunc('month', current_date - interval '1' month)
+             group by co.id""")
